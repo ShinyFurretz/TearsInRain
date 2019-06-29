@@ -38,8 +38,8 @@ namespace TearsInRain.Serializers {
                 FG = actor.Animation.CurrentFrame[0].Foreground.PackedValue,
                 BG = actor.Animation.CurrentFrame[0].Background.PackedValue,
                 G = actor.Animation.CurrentFrame[0].Glyph,
-                X = actor.Position.X,
-                Y = actor.Position.Y,
+                X = actor.literalPosition.X,
+                Y = actor.literalPosition.Y,
 
                 Name = actor.Name,
                 Type = actor.GetType().ToString(),
@@ -55,7 +55,7 @@ namespace TearsInRain.Serializers {
 
 
             entity.Name = sObj.Name;
-            entity.Position = new Point(sObj.X, sObj.Y);
+            entity.literalPosition = new Point(sObj.X, sObj.Y);
 
             return entity;
         }

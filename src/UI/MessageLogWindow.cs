@@ -23,7 +23,7 @@ namespace TearsInRain.UI {
             _messageConsole = new SadConsole.ScrollingConsole(width - _windowBorderThickness, _maxLines);
             _messageConsole.Position = new Point(1, 1);
             _messageConsole.ViewPort = new Rectangle(0, 0, width - 1, height - _windowBorderThickness);
-            
+            _messageConsole.Cursor.DisableWordBreak = false;
 
             _messageScrollBar = new SadConsole.Controls.ScrollBar(SadConsole.Orientation.Vertical, height - _windowBorderThickness);
             _messageScrollBar.Position = new Point(_messageConsole.Width + 1, _messageConsole.Position.X);

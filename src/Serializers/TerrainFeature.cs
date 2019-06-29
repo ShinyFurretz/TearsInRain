@@ -48,8 +48,8 @@ namespace TearsInRain.Serializers {
                 FG = actor.Animation.CurrentFrame[0].Foreground.PackedValue,
                 BG = actor.Animation.CurrentFrame[0].Background.PackedValue,
                 G = actor.Animation.CurrentFrame[0].Glyph,
-                X = actor.Position.X,
-                Y = actor.Position.Y,
+                X = actor.literalPosition.X,
+                Y = actor.literalPosition.Y,
 
                 Name = actor.Name,
 
@@ -69,7 +69,7 @@ namespace TearsInRain.Serializers {
         }
 
         public static implicit operator TerrainFeature(TerrainSerialized sObj) {
-            return new TerrainFeature(new Color(sObj.FG), new Color(sObj.BG), sObj.Name, (char)sObj.G, sObj.IsBlockingLOS, sObj.IsBlockingMove, sObj.Weight, sObj.Condition, 1, 1, new Color(sObj.DecoColor), (char)sObj.DecoGlyph, sObj.Properties) { Position = new Point(sObj.X, sObj.Y) };
+            return new TerrainFeature(new Color(sObj.FG), new Color(sObj.BG), sObj.Name, (char)sObj.G, sObj.IsBlockingLOS, sObj.IsBlockingMove, sObj.Weight, sObj.Condition, 1, 1, new Color(sObj.DecoColor), (char)sObj.DecoGlyph, sObj.Properties) { literalPosition = new Point(sObj.X, sObj.Y) };
         }
     }
 }

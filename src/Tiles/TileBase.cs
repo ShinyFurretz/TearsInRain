@@ -12,6 +12,7 @@ namespace TearsInRain.Tiles {
         public bool IsBlockingLOS;
         public string Name;
         public bool IsExplored = false;
+        public Point literalPos;
 
 
         public TileBase(Color FG, Color BG, int glyph = 0, bool blockingMove = false, bool blockingLOS = false, String name = "") : base(FG, BG, glyph) {

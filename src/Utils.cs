@@ -46,7 +46,6 @@ namespace TearsInRain {
             }
 
             return char.ToUpper(s[0]) + s.Substring(1);
-        }
-        
+        } 
     }
 }

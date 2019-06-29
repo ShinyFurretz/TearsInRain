@@ -17,7 +17,7 @@ namespace TearsInRain {
         public static UInt64 GameTime = 0; // Deciseconds since game launch (Decisecond = tenth of a second)
 
         public static int GameWidth = 80;
-        public static int GameHeight = 60;
+        public static int GameHeight = 70;
 
         public static UIManager UIManager;
         public static World World;
@@ -26,6 +26,7 @@ namespace TearsInRain {
 
         public static TimeManager TimeManager;
         public static Point MouseLoc = new Point(0, 0);
+        public static bool IsHosting = false;
 
 
         public static Dictionary<string, System.Media.SoundPlayer> SoundLibrary = new Dictionary<string, System.Media.SoundPlayer>(); 
@@ -45,8 +46,8 @@ namespace TearsInRain {
         public static int centisecondCounter = 0;
 
         public static Color CyberBlue = new Color(51, 153, 255);
-
-
+        public static Color[] LogoColors = new ColorGradient(Color.DeepPink, CyberBlue).ToColorArray(5);
+        
         public static Font RegularSize;
         public static Font DoubleSize;
         public static Font QuadrupleSize;
@@ -112,12 +113,12 @@ namespace TearsInRain {
             MapQuarter = Global.Fonts["Cheepicus48"].GetFont(Font.FontSizes.Quarter);
             MapHalf = Global.Fonts["Cheepicus48"].GetFont(Font.FontSizes.Half);
             MapOne = Global.Fonts["Cheepicus48"].GetFont(Font.FontSizes.One);
-             
-            
 
 
-            SadConsole.Themes.Library.Default.Colors.TitleText = CyberBlue;
-            SadConsole.Themes.Library.Default.Colors.Lines = CyberBlue; 
+
+
+            SadConsole.Themes.Library.Default.Colors.TitleText = LogoColors[3];
+            SadConsole.Themes.Library.Default.Colors.Lines = LogoColors[3];
             SadConsole.Themes.Library.Default.Colors.ControlHostBack = Color.Black;
 
             
@@ -129,7 +130,7 @@ namespace TearsInRain {
             Utils.InitDirections();
 
             Global.FontDefault = RegularSize;
-            Global.FontDefault.ResizeGraphicsDeviceManager(SadConsole.Global.GraphicsDeviceManager, 80, 60, 0, 0);
+            Global.FontDefault.ResizeGraphicsDeviceManager(SadConsole.Global.GraphicsDeviceManager, 80, 70, 0, 0);
             Global.ResetRendering();
 
             

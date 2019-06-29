@@ -66,9 +66,15 @@ namespace TearsInRain {
             Point loc = new Point(x, y);
 
             if (NewTiles.ContainsKey(loc) && NewTiles[loc] is T) {
+                if (NewTiles[loc].literalPos != loc) {
+                    NewTiles[loc].literalPos = loc;
+                }
+
                 return (T)NewTiles[loc];
             } else if (!NewTiles.ContainsKey(loc)) {
                 NewTiles.Add(loc, GenerateTile(SimplexNoise.Noise.CalcPixel2D(loc.X, loc.Y, 0.5f)));
+
+                NewTiles[loc].literalPos = loc;
 
                 return (T)NewTiles[loc];
             } else return null;
@@ -77,23 +83,37 @@ namespace TearsInRain {
 
         public T GetTileAt<T>(Point loc) where T : TileBase {
             if (NewTiles.ContainsKey(loc) && NewTiles[loc] is T) {
+                if (NewTiles[loc].literalPos != loc) {
+                    NewTiles[loc].literalPos = loc;
+                }
+
+
+                
                 return (T) NewTiles[loc];
             } else if (!NewTiles.ContainsKey(loc)) {
                 NewTiles.Add(loc, GenerateTile(SimplexNoise.Noise.CalcPixel2D(loc.X, loc.Y, 0.5f)));
+                NewTiles[loc].literalPos = loc;
+
+                if (!GameLoop.IsHosting) {
+                    string msg = "t_request|" + loc.X + "|" + loc.Y;
+                    GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(msg));
+                }
+
 
                 return (T) NewTiles[loc];
             } else return null;
         }
 
         public TileBase[] GetTileRegion(Point center) {
-            int startY = center.Y - 50;
-            int startX = center.X - 50;
-
-            TileBase[] region = new TileBase[10201];
+            int startY = center.Y - (GameLoop.UIManager.MapConsole.Height / 2);
+            int startX = center.X - (GameLoop.UIManager.MapConsole.Width / 2);
             
-            for (int y = 0; y < 101; y++) {
-                for (int x = 0; x < 101; x++) {
-                    region[new Point(x, y).ToIndex(101)] = GetTileAt<TileBase>(x + startX, y + startY);
+
+            TileBase[] region = new TileBase[GameLoop.UIManager.MapConsole.Height * GameLoop.UIManager.MapConsole.Width];
+            
+            for (int y = 0; y < (GameLoop.UIManager.MapConsole.Height); y++) {
+                for (int x = 0; x < (GameLoop.UIManager.MapConsole.Width); x++) {
+                    region[new Point(x, y).ToIndex(GameLoop.UIManager.MapConsole.Width)] = GetTileAt<TileBase>(x + startX, y + startY);
                 }
             }
             return region;
@@ -114,17 +134,28 @@ namespace TearsInRain {
         }
         
         public void Add(Entity entity) {
-            Entities.Add(entity, entity.Position);
+            Entities.Add(entity, entity.literalPosition);
             
             entity.Moved += OnEntityMoved;
         }
         
         private void OnEntityMoved(object sender, Entity.EntityMovedEventArgs args) {
-            Entities.Move(args.Entity as Entity, args.Entity.Position);
+            int posIndex = args.Entity.Position.ToIndex(GameLoop.UIManager.MapConsole.Width);
             
-            if (GameLoop.World.players.ContainsKey(GameLoop.NetworkingManager.myUID)) {
-                GameLoop.UIManager.CenterOnActor(GameLoop.World.players[GameLoop.NetworkingManager.myUID]);
+            if (GameLoop.UIManager.latestRegion != null && GameLoop.UIManager.latestRegion.Length > posIndex && posIndex >= 0) {
+                Point literalPos = GameLoop.UIManager.latestRegion[args.Entity.Position.ToIndex(GameLoop.UIManager.MapConsole.Width)].literalPos;
+
+                if (args.Entity is Entity entity) {
+                    entity.literalPosition = literalPos;
+                    Entities.Move(entity, entity.literalPosition);
+                }
             }
+
+            if (GameLoop.World.players.ContainsKey(GameLoop.NetworkingManager.myUID)) {
+                GameLoop.UIManager.CenterOnActor(GameLoop.World.players[GameLoop.NetworkingManager.myUID], false);
+            }
+
+
         }
 
         public void SetTile(Point pos, TileBase tile) {
@@ -143,9 +174,9 @@ namespace TearsInRain {
             for (int i = 0; i < num; i++) {
                 TerrainFeature treeCopy = tree.Clone();
 
-                treeCopy.Position = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
+                treeCopy.literalPosition = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
 
-                if (GetEntityAt<TerrainFeature>(treeCopy.Position) == null && GetTileAt<TileBase>(treeCopy.Position.X, treeCopy.Position.Y).Name == "grass")
+                if (GetEntityAt<TerrainFeature>(treeCopy.literalPosition) == null && GetTileAt<TileBase>(treeCopy.literalPosition.X, treeCopy.literalPosition.Y).Name == "grass")
                    Add(treeCopy);
             }
         }
@@ -158,32 +189,32 @@ namespace TearsInRain {
                 switch (flowerType) {
                     case 0:
                         TerrainFeature cornflower = new TerrainFeature(Color.CornflowerBlue, Color.Transparent, "cornflower", (char)266, false, false, 0.01, 100, 1, 1, Color.Green, (char) 282);
-                        cornflower.Position = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
-                        if (GetEntityAt<TerrainFeature>(cornflower.Position) == null && GetTileAt<TileBase>(cornflower.Position.X, cornflower.Position.Y).Name == "grass")
+                        cornflower.literalPosition = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
+                        if (GetEntityAt<TerrainFeature>(cornflower.literalPosition) == null && GetTileAt<TileBase>(cornflower.literalPosition.X, cornflower.literalPosition.Y).Name == "grass")
                             Add(cornflower);
                         break;
                     case 1:
                         TerrainFeature rose = new TerrainFeature(Color.Red, Color.Transparent, "rose", (char)268, false, false, 0.01, 100, 1, 1, Color.Green, (char)284);
-                        rose.Position = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
-                        if (GetEntityAt<TerrainFeature>(rose.Position) == null && GetTileAt<TileBase>(rose.Position.X, rose.Position.Y).Name == "grass")
+                        rose.literalPosition = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
+                        if (GetEntityAt<TerrainFeature>(rose.literalPosition) == null && GetTileAt<TileBase>(rose.literalPosition.X, rose.literalPosition.Y).Name == "grass")
                             Add(rose);
                         break;
                     case 2:
                         TerrainFeature violet = new TerrainFeature(Color.Purple, Color.Transparent, "violet", (char)268, false, false, 0.01, 100, 1, 1, Color.Green, (char)284);
-                        violet.Position = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
-                        if (GetEntityAt<TerrainFeature>(violet.Position) == null && GetTileAt<TileBase>(violet.Position.X, violet.Position.Y).Name == "grass")
+                        violet.literalPosition = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
+                        if (GetEntityAt<TerrainFeature>(violet.literalPosition) == null && GetTileAt<TileBase>(violet.literalPosition.X, violet.literalPosition.Y).Name == "grass")
                             Add(violet);
                         break;
                     case 3:
                         TerrainFeature dandelion = new TerrainFeature(Color.Yellow, Color.Transparent, "dandelion", (char)267, false, false, 0.01, 100, 1, 1, Color.Green, (char)283);
-                        dandelion.Position = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
-                        if (GetEntityAt<TerrainFeature>(dandelion.Position) == null && GetTileAt<TileBase>(dandelion.Position.X, dandelion.Position.Y).Name == "grass")
+                        dandelion.literalPosition = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
+                        if (GetEntityAt<TerrainFeature>(dandelion.literalPosition) == null && GetTileAt<TileBase>(dandelion.literalPosition.X, dandelion.literalPosition.Y).Name == "grass")
                             Add(dandelion);
                         break;
                     default:
                         TerrainFeature tulip = new TerrainFeature(Color.HotPink, Color.Transparent, "tulip", (char)266, false, false, 0.01, 100, 1, 1, Color.Green, (char)282);
-                        tulip.Position = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
-                        if (GetEntityAt<TerrainFeature>(tulip.Position) == null && GetTileAt<TileBase>(tulip.Position.X, tulip.Position.Y).Name == "grass")
+                        tulip.literalPosition = (GameLoop.Random.Next(0, Width * Height)).ToPoint(Width);
+                        if (GetEntityAt<TerrainFeature>(tulip.literalPosition) == null && GetTileAt<TileBase>(tulip.literalPosition.X, tulip.literalPosition.Y).Name == "grass")
                             Add(tulip);
                         break;
                 }
@@ -206,9 +237,9 @@ namespace TearsInRain {
 
         public TileBase GenerateTile(float noise) {
             if (noise < 128) {
-                return GameLoop.TileLibrary["grass"];
+                return GameLoop.TileLibrary["grass"].Clone();
             } else {
-                return GameLoop.TileLibrary["grass"];
+                return GameLoop.TileLibrary["wood floor"].Clone();
             }
         }
     }

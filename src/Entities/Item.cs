@@ -87,7 +87,7 @@ namespace TearsInRain.Entities {
 
                     if (GameLoop.World.CurrentMap.GetTileAt<TileBase>(pos) != null) {
                         GameLoop.World.CurrentMap.NewTiles[pos] = GameLoop.TileLibrary["farmland"].Clone();
-                        GameLoop.UIManager.RefreshMap(player.Position);
+                        GameLoop.UIManager.RefreshMap(player.literalPosition);
 
                         player.CurrentStamina -= 5;
 

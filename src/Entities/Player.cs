@@ -83,7 +83,7 @@ namespace TearsInRain.Entities {
 
             Equipped = actor.Equipped;
 
-            Position = pos;
+            literalPosition = pos;
 
             tilesheetName = actor.tilesheetName;
             UpdateFontSize(GameLoop.UIManager.hold.SizeMultiple);

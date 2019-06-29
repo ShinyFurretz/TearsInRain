@@ -12,6 +12,7 @@ namespace TearsInRain.Entities {
     public class Entity : SadConsole.Entities.Entity, GoRogue.IHasID { 
         public uint ID { get; private set; }
         public string tilesheetName;
+        public Point literalPosition;
         
 
         public Entity(Color foreground, Color background, int glyph, int width = 1, int height = 1) : base(width, height) {
@@ -26,7 +27,7 @@ namespace TearsInRain.Entities {
 
 
 
-            Position = Position;
+            literalPosition = literalPosition;
             IsDirty = true;
             
             GameLoop.UIManager.IsDirty = true;
@@ -37,7 +38,6 @@ namespace TearsInRain.Entities {
 
             IsVisible = false;
         }
-
 
         public void UpdateFontSize(SadConsole.Font.FontSizes newSize) {
             if (tilesheetName != null && SadConsole.Global.Fonts.ContainsKey(tilesheetName)) {
