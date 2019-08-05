@@ -109,6 +109,9 @@
     <Compile Include="src\Serializers\Item.cs" />
     <Compile Include="src\Serializers\Actor.cs" />
     <Compile Include="src\Skill.cs" />
+    <Compile Include="src\Tiles\Biome.cs" />
+    <Compile Include="src\Tiles\Flora.cs" />
+    <Compile Include="src\Tiles\WorldTile.cs" />
     <Compile Include="src\TimeManager.cs" />
     <Compile Include="src\UI\Map.cs" />
     <Compile Include="src\UI\MapGenerator.cs" />

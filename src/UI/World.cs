@@ -137,8 +137,7 @@ namespace TearsInRain {
             
             lastFov = new FOV(fovMap);
 
-            if (GameLoop.World.players.ContainsKey(GameLoop.NetworkingManager.myUID)) {
-
+            if (GameLoop.World.players.ContainsKey(GameLoop.NetworkingManager.myUID)) { 
                 if (GameLoop.UIManager.latestRegion != null) {
                     GameLoop.UIManager.CameraOrigin = GameLoop.UIManager.latestRegion[0].literalPos;
                     GameLoop.UIManager.CameraEnd = GameLoop.UIManager.latestRegion[GameLoop.UIManager.latestRegion.Length - 1].literalPos;
@@ -157,8 +156,17 @@ namespace TearsInRain {
                 Point mouseLoc = GameLoop.MouseLoc;
                 double degrees = Math.Atan2((mouseLoc.Y - playerRel.Y), (mouseLoc.X - playerRel.X)) * (180.0 / Math.PI);
                 degrees = (degrees > 0.0 ? degrees : (360.0 + degrees));
-                lastFov.Calculate(start, 20, Radius.CIRCLE, degrees, 114);
-                
+
+
+                int dist = 20;
+
+                if (GameLoop.UIManager.MapConsole.Height - 2 < 37) {
+                    dist = (GameLoop.UIManager.MapConsole.Height - 2) / 2;
+                }
+
+
+                lastFov.Calculate(start, dist, Radius.CIRCLE, degrees, 114);
+
                 foreach (var spot in lastFov.NewlySeen) {
                     TileBase tile = CurrentMap.GetTileAt<TileBase>(spot + CameraOrigin);
                     tile.IsVisible = true;
@@ -174,12 +182,12 @@ namespace TearsInRain {
                     }
 
                     if (!SeenTiles.Contains(spot)) {
-                        SeenTiles.Add(new Point(spot.X, spot.Y));
+                        SeenTiles.Add(spot);
                     }
                 }
 
-                foreach (KeyValuePair<long, Player> player in players) { 
-                    if (!lastFov.BooleanFOV[player.Value.Position.X, player.Value.Position.Y] && player.Key != GameLoop.NetworkingManager.myUID) { 
+                foreach (KeyValuePair<long, Player> player in players) {
+                    if (!lastFov.BooleanFOV[player.Value.Position.X, player.Value.Position.Y] && player.Key != GameLoop.NetworkingManager.myUID) {
                         player.Value.IsVisible = false;
                     } else if (lastFov.BooleanFOV[player.Value.Position.X, player.Value.Position.Y] || player.Key == GameLoop.NetworkingManager.myUID) {
                         player.Value.IsVisible = true;
@@ -188,7 +196,7 @@ namespace TearsInRain {
                         if (player.Key != GameLoop.NetworkingManager.myUID) {
                             Point myPos = players[GameLoop.NetworkingManager.myUID].Position;
                             Point theirPos = player.Value.Position;
-                            int distance = (int) Distance.CHEBYSHEV.Calculate(myPos.X, myPos.Y, theirPos.X, theirPos.Y);
+                            int distance = (int)Distance.CHEBYSHEV.Calculate(myPos.X, myPos.Y, theirPos.X, theirPos.Y);
 
                             player.Value.UpdateStealth((distance / 2) - 5);
                         }
@@ -196,17 +204,17 @@ namespace TearsInRain {
                     }
                 }
 
-                //foreach (Entity entity in GameLoop.UIManager.MapConsole.Children) {
-                //    if (!(entity is Player)) {
-                //        if (lastFov.BooleanFOV[entity.Position.X, entity.Position.Y]) {
-                //            entity.IsVisible = true;
-                //        }
+                foreach (Entity entity in GameLoop.UIManager.MapConsole.Children) {
+                    if (!(entity is Player)) {
+                        if (lastFov.BooleanFOV[entity.Position.X, entity.Position.Y]) {
+                            entity.IsVisible = true;
+                        }
 
-                //        if (!lastFov.BooleanFOV[entity.Position.X, entity.Position.Y]) {
-                //            entity.IsVisible = false;
-                //        }
-                //    }
-                //}
+                        if (!lastFov.BooleanFOV[entity.Position.X, entity.Position.Y]) {
+                            entity.IsVisible = false;
+                        }
+                    }
+                }
 
 
                 for (int i = SeenTiles.Count - 1; i > 0; i--) {
@@ -215,7 +223,7 @@ namespace TearsInRain {
                     Point modifiedSpot = spot + CameraOrigin;
 
 
-                    if (!lastFov.CurrentFOV.Contains(new GoRogue.Coord(modifiedSpot.X, modifiedSpot.Y))) {
+                    if (!lastFov.CurrentFOV.Contains(new GoRogue.Coord(spot.X, spot.Y))) {
                         TileBase tile = CurrentMap.GetTileAt<TileBase>(modifiedSpot.X, modifiedSpot.Y);
                         tile.Darken(true);
                         SeenTiles.Remove(spot);
@@ -226,7 +234,7 @@ namespace TearsInRain {
                         GameLoop.UIManager.MapConsole.ClearDecorators(modifiedSpot.X, modifiedSpot.Y, 1);
                     }
                 }
-                
+
 
                 GameLoop.UIManager.MapConsole.IsDirty = true;
             }

@@ -91,6 +91,7 @@ namespace TearsInRain {
             }
 
             NetworkingManager.Update();
+
         }
 
         private static void Init() {
