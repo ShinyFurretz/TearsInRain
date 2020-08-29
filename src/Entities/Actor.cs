@@ -53,7 +53,7 @@ namespace TearsInRain.Entities {
         public int Dodge = 8;
 
         public bool IsStealthing = false;
-        public Color NotStealthColor;
+        public bool FailedStealth = false; 
         public int StealthResult = 0;
         public int BaseStealthResult = 0;
 
@@ -109,8 +109,11 @@ namespace TearsInRain.Entities {
         public void Stealth(int stealthResult, bool IsLocal) {
             IsStealthing = true;
 
+            if (stealthResult > Dexterity) {
+                FailedStealth = true;
+            }
+
             if (IsLocal) {
-                NotStealthColor = Animation.CurrentFrame[0].Foreground;
                 Animation.CurrentFrame[0].Foreground = Color.DarkGray;
                 Animation.IsDirty = true;
             } else {
@@ -124,23 +127,28 @@ namespace TearsInRain.Entities {
         public void Unstealth() {
             if (!IsStealthing) { return; }
             IsStealthing = false;
+            FailedStealth = false;
             StealthResult = 0;
 
             Animation.CurrentFrame[0].Foreground.A = 255;
-            Animation.CurrentFrame[0].Foreground = NotStealthColor;
+            Animation.CurrentFrame[0].Foreground = Color.Yellow;
             Animation.IsDirty = true;
 
             Speed -= 5;
         }
 
 
-        public void UpdateStealth(int perceptionCheck) {
+        public void UpdateStealth(int mod) {
             if (!IsStealthing) { return; }
             
-            if (StealthResult > perceptionCheck) {
-                Animation.CurrentFrame[0].Foreground.A = 0;
-            } else {
-                Animation.CurrentFrame[0].Foreground.A = 255;
+            if (!FailedStealth) {
+                if (Dexterity >= (StealthResult - mod)) {
+                    int successBy = (Dexterity - (StealthResult - mod));
+                    int newA = 255 - (successBy * 10);
+                    if (newA < 75) { newA = 75; }
+                    if (newA > 255) { newA = 255; }
+                    Animation.CurrentFrame[0].Foreground.A = (byte)newA;
+                }
             }
 
             Animation.IsDirty = true;
@@ -435,26 +443,6 @@ namespace TearsInRain.Entities {
             }
 
 
-        }
-
-
-        public int SkillCheck(string skillName, int miscMods) {
-            if (Skills.ContainsKey(skillName)) {
-                int abilityMod = 0;
-                if (Skills[skillName].ControllingAttribute == "STR") { abilityMod = (int)Math.Floor((double)((Strength - 10) / 2)); }
-                if (Skills[skillName].ControllingAttribute == "DEX") { abilityMod = (int)Math.Floor((double)((Dexterity - 10) / 2)); }
-                if (Skills[skillName].ControllingAttribute == "CON") { abilityMod = (int)Math.Floor((double)((Constitution - 10) / 2)); }
-                if (Skills[skillName].ControllingAttribute == "INT") { abilityMod = (int)Math.Floor((double)((Intelligence - 10) / 2)); }
-                if (Skills[skillName].ControllingAttribute == "WIS") { abilityMod = (int)Math.Floor((double)((Wisdom - 10) / 2)); }
-                if (Skills[skillName].ControllingAttribute == "CHA") { abilityMod = (int)Math.Floor((double)((Charisma - 10) / 2)); }
-
-                int totalMod = abilityMod + miscMods + Skills[skillName].Ranks;
-                if (ClassSkills.Contains(Skills[skillName].Name)) { totalMod += 3; }
-                
-                return (GoRogue.DiceNotation.Dice.Roll("1d20") + totalMod);
-            } else {
-                return -1;
-            }
         }
     }
 }

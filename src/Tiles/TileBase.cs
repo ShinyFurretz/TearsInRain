@@ -19,7 +19,7 @@ namespace TearsInRain.Tiles {
             IsBlockingMove = blockingMove;
             IsBlockingLOS = blockingLOS;
             Name = name;
-            IsVisible = false; 
+            IsVisible = true; 
         }
 
 
@@ -27,7 +27,7 @@ namespace TearsInRain.Tiles {
             return new TileBase(Foreground, Background, Glyph, IsBlockingMove, IsBlockingLOS, Name);
         }
 
-        
+
         public void Darken(bool isGray) {
             if (isGray) {
                 Foreground.A = 200;

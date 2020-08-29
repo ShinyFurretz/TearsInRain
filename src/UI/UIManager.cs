@@ -190,7 +190,7 @@ namespace TearsInRain.UI {
 
             base.Update(timeElapsed);
             if (STATE == "GAME") {
-                GameLoop.World.CalculateFov(GameLoop.CommandManager.lastPeek);
+        //        GameLoop.World.CalculateFov(GameLoop.CommandManager.lastPeek);
         
                 if (StatusWindow.IsVisible) { UpdateStatusWindow(); }
                 if (ContextWindow.IsVisible) { UpdateContextWindow(); }
@@ -216,7 +216,7 @@ namespace TearsInRain.UI {
                     }
                 }
 
-               // SyncMapEntities();
+                SyncMapEntities();
 
 
 
@@ -874,10 +874,8 @@ namespace TearsInRain.UI {
                 for (int i = 0; i < latestRegion.Length; i++) {
                     if (GameLoop.World.CurrentMap.GetEntitiesAt<Entity>(latestRegion[i].literalPos) != null) {
                         foreach (Entity entity in GameLoop.World.CurrentMap.GetEntitiesAt<Entity>(latestRegion[i].literalPos)) {
-                            if (entity.Position != i.ToPoint(MapConsole.Width)) {
-                                entity.Position = i.ToPoint(MapConsole.Width);
-                                entity.PositionOffset = new Point(0, 0);
-                            }
+                            entity.Position = i.ToPoint(MapConsole.Width);
+                            entity.PositionOffset = new Point(0, 0);
                         }
                     }
                 }
@@ -2315,9 +2313,9 @@ namespace TearsInRain.UI {
                         }
                     }
 
-                    if (Global.KeyboardState.IsKeyPressed(Keys.S) && (Global.KeyboardState.IsKeyDown(Keys.LeftShift) || Global.KeyboardState.IsKeyPressed(Keys.LeftShift))) {
+                    if (Global.KeyboardState.IsKeyPressed(Keys.S) && Global.KeyboardState.IsKeyDown(Keys.LeftShift)) {
                         if (!player.IsStealthing) {
-                            int skillCheck = player.SkillCheck("stealth", 0);
+                            int skillCheck = Dice.Roll("3d6");
                             player.Stealth(skillCheck, true);
                             GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes("stealth|yes|" + GameLoop.NetworkingManager.myUID + "|" + skillCheck));
                         } else {

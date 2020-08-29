@@ -224,7 +224,6 @@ namespace TearsInRain {
 
         public bool IsTransparent (Coord pos) {
             Point position = new Point(pos.X, pos.Y);
-            position += GameLoop.UIManager.CameraOrigin;
 
 
             TerrainFeature terrain = GetEntityAt<TerrainFeature>(position);
