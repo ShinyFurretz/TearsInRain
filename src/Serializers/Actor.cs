@@ -104,8 +104,8 @@ namespace TearsInRain.Serializers {
                 MiscRanksMod = actor.MiscRanksMod,
 
 
-                X = actor.literalPosition.X,
-                Y = actor.literalPosition.Y,
+                X = actor.Position.X,
+                Y = actor.Position.Y,
 
                 decorators = actor.decorators,
             };
@@ -148,7 +148,7 @@ namespace TearsInRain.Serializers {
             entity.MiscRanksMod = serializedObject.MiscRanksMod;
             entity.decorators = serializedObject.decorators;
 
-            entity.literalPosition = new Point(serializedObject.X, serializedObject.Y);
+            entity.Position = new Point(serializedObject.X, serializedObject.Y);
 
             return entity;
         }

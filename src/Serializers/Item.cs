@@ -56,8 +56,8 @@ namespace TearsInRain.Serializers {
                 Slot = item.Slot,
                 Quantity = item.Quantity,
                 Properties = item.Properties,
-                X = item.literalPosition.X,
-                Y = item.literalPosition.Y,
+                X = item.Position.X,
+                Y = item.Position.Y,
                 Type = item.GetType().ToString(),
             };
 
@@ -66,7 +66,7 @@ namespace TearsInRain.Serializers {
 
         public static implicit operator Item(ItemSerialized sObj) {
             Item newItem = new Item(new Color(sObj.FG), new Color(sObj.BG), sObj.Name, (char)sObj.Glyph, sObj.Weight, sObj.Condition, quantity: sObj.Quantity, plural: sObj.NamePlural, slot: sObj.Slot, properties: sObj.Properties);
-            newItem.literalPosition = new Point(sObj.X, sObj.Y);
+            newItem.Position = new Point(sObj.X, sObj.Y);
 
 
             return newItem;

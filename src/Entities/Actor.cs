@@ -77,31 +77,89 @@ namespace TearsInRain.Entities {
             }
         }
 
-        public bool MoveBy(Point positionChange) {
-            if (GameLoop.World.CurrentMap.IsTileWalkable(literalPosition + positionChange)) {
-                Actor monster = GameLoop.World.CurrentMap.GetEntityAt<Actor>(literalPosition + positionChange);
-                Item item = GameLoop.World.CurrentMap.GetEntityAt<Item>(literalPosition + positionChange);
+        public bool MoveBy(Point positionChange) { 
+            TileBase tile = GameLoop.World.CurrentMap.GetTileAt<TileBase>(Position.X + positionChange.X, Position.Y + positionChange.Y);
 
-                foreach (KeyValuePair<long, Player> player in GameLoop.World.players) {
-                    if (player.Value.literalPosition == literalPosition + positionChange) {
-                        monster = player.Value;
+
+            if (tile != null) {
+                Point justVert = new Point(0, positionChange.Y);
+                Point justHori = new Point(positionChange.X, 0);
+
+                if (GameLoop.World.CurrentMap.IsTileWalkable(Position + positionChange) || tile is TileDoor) {
+                    Actor monster = GameLoop.World.CurrentMap.GetEntityAt<Actor>(Position + positionChange);
+                    Item item = GameLoop.World.CurrentMap.GetEntityAt<Item>(Position + positionChange);
+
+                    foreach (KeyValuePair<long, Player> player in GameLoop.World.players) {
+                        if (player.Value.Position == Position + positionChange) {
+                            monster = player.Value;
+                        }
                     }
-                }
 
-                if (monster != null) {
-                    GameLoop.CommandManager.Attack(this, monster);
+                    if (monster != null) {
+                        GameLoop.CommandManager.Attack(this, monster);
+                        return false;
+                    } 
+                    
+                    //else if (tile.Name.ToLower().Contains("door") && !tile.IsOpen) {
+                    //    GameLoop.CommandManager.OpenDoor(this, door, Position + positionChange);
+                    //    return true;
+                    //}
+
+
+                    Position += positionChange;
+                    return true;
+                } else if (GameLoop.World.CurrentMap.IsTileWalkable(Position + justVert) || tile is TileDoor) {
+                    Actor monster = GameLoop.World.CurrentMap.GetEntityAt<Actor>(Position + justVert);
+                    Item item = GameLoop.World.CurrentMap.GetEntityAt<Item>(Position + justVert);
+
+                    foreach (KeyValuePair<long, Player> player in GameLoop.World.players) {
+                        if (player.Value.Position == Position + justVert) {
+                            monster = player.Value;
+                        }
+                    }
+
+                    if (monster != null) {
+                        GameLoop.CommandManager.Attack(this, monster);
+                        return true;
+                    } else if (tile is TileDoor door && !door.IsOpen) {
+                        GameLoop.CommandManager.OpenDoor(this, door, Position + justVert);
+                        return true;
+                    }
+
+
+                    Position += justVert;
+                    return true;
+                } else if (GameLoop.World.CurrentMap.IsTileWalkable(Position + justHori) || tile is TileDoor) {
+                    Actor monster = GameLoop.World.CurrentMap.GetEntityAt<Actor>(Position + justHori);
+                    Item item = GameLoop.World.CurrentMap.GetEntityAt<Item>(Position + justHori);
+
+                    foreach (KeyValuePair<long, Player> player in GameLoop.World.players) {
+                        if (player.Value.Position == Position + justHori) {
+                            monster = player.Value;
+                        }
+                    }
+
+                    if (monster != null) {
+                        GameLoop.CommandManager.Attack(this, monster);
+                        return true;
+                    } else if (tile is TileDoor door && !door.IsOpen) {
+                        GameLoop.CommandManager.OpenDoor(this, door, Position + justHori);
+                        return true;
+                    }
+
+
+                    Position += justHori;
+                    return true;
+                } else {
                     return false;
                 }
-
-                literalPosition += positionChange;
-                return true;
             } else {
                 return false;
             }
         }
 
         public bool MoveTo(Point newPosition) {
-            literalPosition = newPosition;
+            Position = newPosition;
             return true;
         }
 
@@ -286,7 +344,7 @@ namespace TearsInRain.Entities {
             RecalculateWeight();
 
             if (this is Player) {
-                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + literalPosition.X + "|" + literalPosition.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
+                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + Position.X + "|" + Position.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
                 GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(msg));
             }
 
@@ -317,7 +375,7 @@ namespace TearsInRain.Entities {
             }
 
             if (this is Player) {
-                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + literalPosition.X + "|" + literalPosition.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
+                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + Position.X + "|" + Position.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
                 GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(msg));
             }
         }
@@ -337,7 +395,7 @@ namespace TearsInRain.Entities {
                     }
 
 
-                    string pickupMsg = "i_data|pickup|" + item.literalPosition.X + "|" + item.literalPosition.Y + "|" + JsonConvert.SerializeObject(item, Formatting.Indented, new ItemJsonConverter()) + "|" + item.Quantity;
+                    string pickupMsg = "i_data|pickup|" + item.Position.X + "|" + item.Position.Y + "|" + JsonConvert.SerializeObject(item, Formatting.Indented, new ItemJsonConverter()) + "|" + item.Quantity;
                     GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(pickupMsg));
                     item.Destroy();
                     break;
@@ -353,7 +411,7 @@ namespace TearsInRain.Entities {
                         GameLoop.UIManager.MessageLog.Add($"{Name} picked up {item.Quantity} {item.NamePlural}.");
                     }
 
-                    string pickupMsg = "i_data|pickup|" + item.literalPosition.X + "|" + item.literalPosition.Y + "|" + JsonConvert.SerializeObject(item, Formatting.Indented, new ItemJsonConverter()) + "|" + item.Quantity;
+                    string pickupMsg = "i_data|pickup|" + item.Position.X + "|" + item.Position.Y + "|" + JsonConvert.SerializeObject(item, Formatting.Indented, new ItemJsonConverter()) + "|" + item.Quantity;
                     GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(pickupMsg));
                     item.Destroy();
                 } else {
@@ -365,19 +423,19 @@ namespace TearsInRain.Entities {
             GameLoop.UIManager.UpdateInventory();
 
             if (this is Player) {
-                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + literalPosition.X + "|" + literalPosition.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
+                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + Position.X + "|" + Position.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
                 GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(msg));
             }
         }
 
 
         public void DropItem(int index, int num) {
-            List<Item> itemsAtPos = GameLoop.World.CurrentMap.GetEntitiesAt<Item>(literalPosition);
+            List<Item> itemsAtPos = GameLoop.World.CurrentMap.GetEntitiesAt<Item>(Position);
 
             if (num == 0 || num >= Inventory[index].Quantity) {
                 Item dropped = Inventory[index].Clone();
                 dropped.Font = GameLoop.UIManager.hold;
-                dropped.literalPosition = literalPosition;
+                dropped.Position = Position;
 
                 bool foundSame = false;
 
@@ -399,12 +457,12 @@ namespace TearsInRain.Entities {
                 RecalculateWeight();
                 GameLoop.UIManager.UpdateInventory();
 
-                string secondMsg = "i_data|drop|" + literalPosition.X + "|" + literalPosition.Y + "|" + JsonConvert.SerializeObject(dropped, Formatting.Indented, new ItemJsonConverter());
+                string secondMsg = "i_data|drop|" + Position.X + "|" + Position.Y + "|" + JsonConvert.SerializeObject(dropped, Formatting.Indented, new ItemJsonConverter());
                 GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(secondMsg));
             } else {
                 Item dropped = Inventory[index].Clone();
                 dropped.Font = GameLoop.UIManager.hold;
-                dropped.literalPosition = literalPosition;
+                dropped.Position = Position;
                 dropped.Quantity = num;
 
                 Inventory[index].Quantity -= num;
@@ -432,13 +490,13 @@ namespace TearsInRain.Entities {
                 RecalculateWeight();
                 GameLoop.UIManager.UpdateInventory();
 
-                string secondMsg = "i_data|drop|" + literalPosition.X + "|" + literalPosition.Y + "|" + JsonConvert.SerializeObject(dropped, Formatting.Indented, new ItemJsonConverter());
+                string secondMsg = "i_data|drop|" + Position.X + "|" + Position.Y + "|" + JsonConvert.SerializeObject(dropped, Formatting.Indented, new ItemJsonConverter());
                 GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(secondMsg));
             }
 
 
             if (this is Player) {
-                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + literalPosition.X + "|" + literalPosition.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
+                string msg = "p_update|" + GameLoop.NetworkingManager.myUID + "|" + Position.X + "|" + Position.Y + "|" + JsonConvert.SerializeObject(this, Formatting.Indented, new ActorJsonConverter());
                 GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(msg));
             }
 

@@ -114,7 +114,7 @@
     <Compile Include="src\UI\MapGenerator.cs" />
     <Compile Include="src\Entities\Player.cs" />
     <Compile Include="src\Tiles\TileBase.cs" />
-    <Compile Include="src\UI\CloseableWindow.cs" />
+    <Compile Include="src\UI\ChatLogWindow.cs" />
     <Compile Include="src\UI\MessageLogWindow.cs" />
     <Compile Include="src\Tiles\TileDoor.cs" />
     <Compile Include="src\UI\UIManager.cs" />

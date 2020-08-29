@@ -58,7 +58,7 @@ namespace TearsInRain {
                
                 newMonster.Name = "the common troll";
 
-                newMonster.literalPosition = monsterPosition;
+                newMonster.Position = monsterPosition;
                 CurrentMap.Add(newMonster);
             }
         }
@@ -68,9 +68,9 @@ namespace TearsInRain {
                 Player newPlayer = player;
 
 
-                if (newPlayer.literalPosition == new Point(0, 0)) {
-                    while (CurrentMap.GetTileAt<TileBase>(newPlayer.literalPosition).IsBlockingMove) {
-                        newPlayer.literalPosition = new Point(GameLoop.Random.Next(-100, 100), GameLoop.Random.Next(-100, 100));
+                if (newPlayer.Position == new Point(0, 0)) {
+                    while (CurrentMap.GetTileAt<TileBase>(newPlayer.Position).IsBlockingMove) {
+                        newPlayer.Position = new Point(GameLoop.Random.Next(-100, 100), GameLoop.Random.Next(-100, 100));
                     }
                 }
 
@@ -85,10 +85,10 @@ namespace TearsInRain {
             
             for (int i = 0; i < numLoot; i++) {
                 Item newLoot = GameLoop.ItemLibrary["potato"].Clone();
-                newLoot.literalPosition = new Point(GameLoop.Random.Next(-100, 100), GameLoop.Random.Next(-100, 100));
+                newLoot.Position = new Point(GameLoop.Random.Next(-100, 100), GameLoop.Random.Next(-100, 100));
 
-                while (CurrentMap.GetTileAt<TileBase>(newLoot.literalPosition).IsBlockingMove) {
-                    newLoot.literalPosition = new Point(GameLoop.Random.Next(-100, 100), GameLoop.Random.Next(-100, 100));
+                while (CurrentMap.GetTileAt<TileBase>(newLoot.Position).IsBlockingMove) {
+                    newLoot.Position = new Point(GameLoop.Random.Next(-100, 100), GameLoop.Random.Next(-100, 100));
                 }
                 
                 CurrentMap.Add(newLoot);
@@ -122,50 +122,41 @@ namespace TearsInRain {
             lastFov = null;
 
             if (GameLoop.World.players.ContainsKey(GameLoop.NetworkingManager.myUID))
-                GameLoop.UIManager.RefreshMap(GameLoop.World.players[GameLoop.NetworkingManager.myUID].literalPosition);
+                GameLoop.UIManager.RefreshMap(GameLoop.World.players[GameLoop.NetworkingManager.myUID].Position);
             else
                 GameLoop.UIManager.RefreshMap(new Point(0, 0));
 
 
-            CalculateFov(new Point (0, 0));
+           // CalculateFov(new Point (0, 0));
         }
 
 
         public void CalculateFov(Point dir) {
             // Use a GoRogue class that creates a map view so that the IsTransparent function is called whenever FOV asks for the value of a position
-            var fovMap = new GoRogue.MapViews.LambdaMapView<bool>(GameLoop.UIManager.MapConsole.Width, GameLoop.UIManager.MapConsole.Height, CurrentMap.IsTransparent);
+            var fovMap = new GoRogue.MapViews.LambdaMapView<bool>(51, 51, CurrentMap.IsTransparent);
             
             lastFov = new FOV(fovMap);
 
-            if (GameLoop.World.players.ContainsKey(GameLoop.NetworkingManager.myUID)) {
-
-                if (GameLoop.UIManager.latestRegion != null) {
-                    GameLoop.UIManager.CameraOrigin = GameLoop.UIManager.latestRegion[0].literalPos;
-                    GameLoop.UIManager.CameraEnd = GameLoop.UIManager.latestRegion[GameLoop.UIManager.latestRegion.Length - 1].literalPos;
-                }
-
-                Point CameraOrigin = GameLoop.UIManager.CameraOrigin;
-                Point CameraEnd = GameLoop.UIManager.CameraEnd;
-
+            if (GameLoop.World.players.ContainsKey(GameLoop.NetworkingManager.myUID)) { 
 
                 Point start = GameLoop.World.players[GameLoop.NetworkingManager.myUID].Position + dir;
 
                 Point playerRel = GameLoop.World.players[GameLoop.NetworkingManager.myUID].CalculatedPosition;
-                playerRel += new Point(6 * GameLoop.UIManager.zoom, 6 * GameLoop.UIManager.zoom);
+                playerRel += new Point(6, 6);
 
 
                 Point mouseLoc = GameLoop.MouseLoc;
                 double degrees = Math.Atan2((mouseLoc.Y - playerRel.Y), (mouseLoc.X - playerRel.X)) * (180.0 / Math.PI);
                 degrees = (degrees > 0.0 ? degrees : (360.0 + degrees));
                 lastFov.Calculate(start, 20, Radius.CIRCLE, degrees, 114);
-                
+
                 foreach (var spot in lastFov.NewlySeen) {
-                    TileBase tile = CurrentMap.GetTileAt<TileBase>(spot + CameraOrigin);
+                    TileBase tile = CurrentMap.GetTileAt<TileBase>(spot);
                     tile.IsVisible = true;
 
-                    if (CurrentMap.GetEntitiesAt<Entity>(spot + CameraOrigin).Count != 0) {
-                        for (int j = 0; j < CurrentMap.GetEntitiesAt<Entity>(spot + CameraOrigin).Count; j++) {
-                            CurrentMap.GetEntitiesAt<Entity>(spot + CameraOrigin)[j].IsVisible = true;
+                    if (CurrentMap.GetEntitiesAt<Entity>(spot).Count != 0) {
+                        for (int j = 0; j < CurrentMap.GetEntitiesAt<Entity>(spot).Count; j++) {
+                            CurrentMap.GetEntitiesAt<Entity>(spot)[j].IsVisible = true;
                         }
                     }
 
@@ -195,8 +186,8 @@ namespace TearsInRain {
 
                     }
                 }
-
-                //foreach (Entity entity in GameLoop.UIManager.MapConsole.Children) {
+                
+                //foreach (Entity entity in CurrentMap.Entities.Items) {
                 //    if (!(entity is Player)) {
                 //        if (lastFov.BooleanFOV[entity.Position.X, entity.Position.Y]) {
                 //            entity.IsVisible = true;
@@ -212,18 +203,15 @@ namespace TearsInRain {
                 for (int i = SeenTiles.Count - 1; i > 0; i--) {
                     var spot = SeenTiles[i];
 
-                    Point modifiedSpot = spot + CameraOrigin;
-
-
-                    if (!lastFov.CurrentFOV.Contains(new GoRogue.Coord(modifiedSpot.X, modifiedSpot.Y))) {
-                        TileBase tile = CurrentMap.GetTileAt<TileBase>(modifiedSpot.X, modifiedSpot.Y);
+                    if (!lastFov.CurrentFOV.Contains(new GoRogue.Coord(spot.X, spot.Y))) {
+                        TileBase tile = CurrentMap.GetTileAt<TileBase>(spot.X, spot.Y);
                         tile.Darken(true);
                         SeenTiles.Remove(spot);
                     } else {
-                        TileBase tile = CurrentMap.GetTileAt<TileBase>(modifiedSpot.X, modifiedSpot.Y);
+                        TileBase tile = CurrentMap.GetTileAt<TileBase>(spot.X, spot.Y);
                         tile.Darken(false);
 
-                        GameLoop.UIManager.MapConsole.ClearDecorators(modifiedSpot.X, modifiedSpot.Y, 1);
+                        GameLoop.UIManager.MapConsole.ClearDecorators(spot.X, spot.Y, 1);
                     }
                 }
                 

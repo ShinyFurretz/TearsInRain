@@ -31,9 +31,6 @@ namespace TearsInRain.Serializers {
         [DataMember] public bool blocksLOS; // Whether or not this tile blocks Line of Sight
         [DataMember] public bool blocksMove; // Whether or not this tile can be walked on
 
-        [DataMember] public int literalX;
-        [DataMember] public int literalY;
-
         public static implicit operator TileSerialized(TileBase tile) { 
             var sObj = new TileSerialized() {
                 FG = tile.Foreground.PackedValue,
@@ -42,15 +39,13 @@ namespace TearsInRain.Serializers {
                 Name = tile.Name,
                 blocksLOS = tile.IsBlockingLOS,
                 blocksMove = tile.IsBlockingMove,
-                literalX = tile.literalPos.X,
-                literalY = tile.literalPos.Y,
             };
 
             return sObj;
         }
 
         public static implicit operator TileBase(TileSerialized sObj) {
-            return new TileBase(new Color(sObj.FG), new Color(sObj.BG), sObj.Glyph, sObj.blocksMove, sObj.blocksLOS, sObj.Name) { literalPos = new Point(sObj.literalX, sObj.literalY) };
+            return new TileBase(new Color(sObj.FG), new Color(sObj.BG), sObj.Glyph, sObj.blocksMove, sObj.blocksLOS, sObj.Name);
         }
     }
 }

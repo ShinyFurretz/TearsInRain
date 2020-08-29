@@ -22,7 +22,6 @@ namespace TearsInRain {
         public string MD5map = "";
 
         public UserManager userManager;
-        public RelationshipManager relationshipManager;
 
         public void InitNetworking(long lobbyId) {
             // First, connect to the lobby network layer
@@ -58,18 +57,32 @@ namespace TearsInRain {
 
                 if (splitMsg[0] == "move_p") { // Player got moved
                     if (GameLoop.World.players[Convert.ToInt64(splitMsg[1])] != null) {
-                        GameLoop.World.players[Convert.ToInt64(splitMsg[1])].literalPosition = new Point(Convert.ToInt32(splitMsg[2]), Convert.ToInt32(splitMsg[3]));
+                        GameLoop.World.players[Convert.ToInt64(splitMsg[1])].Position = new Point(Convert.ToInt32(splitMsg[2]), Convert.ToInt32(splitMsg[3]));
                     }
                 }
 
                 if (splitMsg[0] == "p_list") { // Translates a list of players being sent
-                    Dictionary<long, Actor> playerList = JsonConvert.DeserializeObject<Dictionary<long, Actor>>(splitMsg[1], new ActorJsonConverter());
+                    for (int i = 1; i < splitMsg.Length; i++) {
+                        string[] playerData = splitMsg[i].Split(';');
+                        long uid = Convert.ToInt64(playerData[0]);
+                        int x = Convert.ToInt32(playerData[1]);
+                        int y = Convert.ToInt32(playerData[2]);
+                        int a = Convert.ToInt32(playerData[3]);
 
-                    foreach (KeyValuePair<long, Actor> actor in playerList) {
-                        GameLoop.World.CreatePlayer(actor.Key, new Player(actor.Value, actor.Value.literalPosition));
+                        GameLoop.World.CreatePlayer(uid, new Player(Color.Yellow, Color.Transparent));
+
+                        Player player = GameLoop.World.players[uid];
+                        player.Position = new Point(x, y);
+                        player.Animation.CurrentFrame[0].Foreground.A = (byte) a;
+
+                        if (a != 255) {
+                            player.IsStealthing = true;
+                        } else {
+                            player.IsStealthing = false;
+                        }
+
+                        player.Animation.IsDirty = true;
                     }
-
-                    GameLoop.UIManager.SyncMapEntities();
                 }
 
                 if (splitMsg[0] == "p_update") {
@@ -80,7 +93,7 @@ namespace TearsInRain {
                     Actor newP = JsonConvert.DeserializeObject<Actor>(splitMsg[4], new ActorJsonConverter()); 
 
                     if (GameLoop.World.players.ContainsKey(uid)) {
-                        GameLoop.World.players[uid] = new Player(newP, new Point(x, y));
+                         GameLoop.World.players[uid] = new Player(newP, new Point(x, y));
                         GameLoop.UIManager.SyncMapEntities(true);
                     } else {
                         GameLoop.World.players.Add(uid, new Player(newP, new Point(0, 0)));
@@ -97,8 +110,8 @@ namespace TearsInRain {
 
 
                         Entity entity = JsonConvert.DeserializeObject<Actor>(smallerMsg[0], new ActorJsonConverter());
-                        entity.literalPosition = new Point(Convert.ToInt32(smallerMsg[1]), Convert.ToInt32(smallerMsg[2]));
-                        GameLoop.ReceivedEntities.Add(entity, entity.literalPosition);
+                        entity.Position = new Point(Convert.ToInt32(smallerMsg[1]), Convert.ToInt32(smallerMsg[2]));
+                        GameLoop.ReceivedEntities.Add(entity, entity.Position);
 
                         entity.IsVisible = false;
                         entity.IsDirty = true;
@@ -164,23 +177,6 @@ namespace TearsInRain {
                     GameLoop.UIManager.SyncMapEntities(true);
                 }
 
-                if (splitMsg[0] == "t_request") {
-                    int x = Convert.ToInt32(splitMsg[1]);
-                    int y = Convert.ToInt32(splitMsg[2]);
-
-
-                    if (GameLoop.IsHosting) {
-                        string returnMsg = "t_request|" + x + "|" + y + "|" + JsonConvert.SerializeObject(GameLoop.World.CurrentMap.GetTileAt<TileBase>(x, y), Formatting.Indented, new TileJsonConverter());
-                        GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(returnMsg));
-                    } else {
-                        TileBase newTile = JsonConvert.DeserializeObject<TileBase>(splitMsg[3], new TileJsonConverter()); 
-                        GameLoop.World.CurrentMap.SetTile(new Point(x, y), newTile); 
-                    }
-                }
-
-
-
-
                 if (splitMsg[0] == "i_data") {
                     if (splitMsg[1] == "list") { // Format: i_data|list|{itemjson}~posX~posY|{itemjson}~posX~posY|...
                         for (int i = 2; i < splitMsg.Length; i++) {
@@ -189,7 +185,7 @@ namespace TearsInRain {
                             
 
                             Item item = JsonConvert.DeserializeObject<Item>(smallerMsg[0], new ItemJsonConverter());
-                            item.literalPosition = new Point(Convert.ToInt32(smallerMsg[1]), Convert.ToInt32(smallerMsg[2]));
+                            item.Position = new Point(Convert.ToInt32(smallerMsg[1]), Convert.ToInt32(smallerMsg[2]));
                             GameLoop.World.CurrentMap.Add(item);
 
                             item.IsVisible = false;
@@ -204,7 +200,7 @@ namespace TearsInRain {
                         int x = Convert.ToInt32(splitMsg[2]);
                         int y = Convert.ToInt32(splitMsg[3]);
                         Item item = JsonConvert.DeserializeObject<Item>(splitMsg[4], new ItemJsonConverter());
-                        item.literalPosition = new Point(x, y);
+                        item.Position = new Point(x, y);
                         GameLoop.World.CurrentMap.Add(item);
 
                         item.IsVisible = false;
@@ -215,7 +211,7 @@ namespace TearsInRain {
                         int x = Convert.ToInt32(splitMsg[2]);
                         int y = Convert.ToInt32(splitMsg[3]);
                         Item item = JsonConvert.DeserializeObject<Item>(splitMsg[4], new ItemJsonConverter());
-                        item.literalPosition = new Point(x, y);
+                        item.Position = new Point(x, y);
 
                         Item existing = GameLoop.World.CurrentMap.GetEntityAt<Item>(new Point(x, y));
                         if (existing != null) {
@@ -266,8 +262,8 @@ namespace TearsInRain {
                     Actor attacker = GameLoop.World.CurrentMap.GetEntityAt<Actor>(atk);
 
                     foreach (KeyValuePair<long, Player> player in GameLoop.World.players) {
-                        if (player.Value.literalPosition == def && defender == null) { defender = player.Value; }
-                        if (player.Value.literalPosition == atk && attacker == null) { attacker = player.Value; }
+                        if (player.Value.Position == def && defender == null) { defender = player.Value; }
+                        if (player.Value.Position == atk && attacker == null) { attacker = player.Value; }
                     } 
 
                     GameLoop.CommandManager.Attack(attacker, defender, attackChance, dodgeChance, damage, true); 
@@ -301,21 +297,6 @@ namespace TearsInRain {
         public NetworkingManager() {
             discord = new Discord.Discord(applicationID, (UInt64)Discord.CreateFlags.Default);
             userManager = discord.GetUserManager();
-            //relationshipManager = discord.GetRelationshipManager();
-
-
-            //relationshipManager.OnRefresh += () => {
-            //    relationshipManager.Filter((ref Relationship relationship) => {
-            //        return relationship.Type == Discord.RelationshipType.Friend;
-            //    });
-            //};
-
-            //relationshipManager.OnRelationshipUpdate += (ref Discord.Relationship relationship) => {
-            //};
-
-
-
-
             discord.RunCallbacks();
 
             if (userManager != null) {
@@ -335,7 +316,6 @@ namespace TearsInRain {
 
             userManager = discord.GetUserManager();
             userManager.OnCurrentUserUpdate += currentUserUpdate;
-            
             discord.RunCallbacks();
         }
 
@@ -355,7 +335,7 @@ namespace TearsInRain {
                     updateUID = false;
                 }
             } catch (Discord.ResultException e) {
-              //  System.Console.WriteLine(e);
+                System.Console.WriteLine(e);
             }
         }
     }

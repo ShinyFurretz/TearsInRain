@@ -18,9 +18,9 @@ namespace TearsInRain {
 
         public TileBase GenerateTile(float noise) {
             if (noise < 128) {
-                return GameLoop.TileLibrary["grass"].Clone();
+                return GameLoop.TileLibrary["grass"];
             } else {
-                return GameLoop.TileLibrary["wall"].Clone();
+                return GameLoop.TileLibrary["wall"];
             }
         }
 

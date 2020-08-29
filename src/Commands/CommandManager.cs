@@ -16,9 +16,8 @@ namespace TearsInRain.Commands {
         public bool MoveActorBy(Actor actor, Point position) {
             if (actor.MoveBy(position)) {
                 actor.TimeLastActed = GameLoop.GameTime;
-                GameLoop.UIManager.SyncMapEntities();
 
-                string msg = "move_p" + "|" + GameLoop.NetworkingManager.myUID + "|" + actor.literalPosition.X + "|" + actor.literalPosition.Y;
+                string msg = "move_p" + "|" + GameLoop.NetworkingManager.myUID + "|" + actor.Position.X + "|" + actor.Position.Y;
                 GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(msg));
                 return true;
             }
@@ -28,7 +27,7 @@ namespace TearsInRain.Commands {
 
 
         public void Peek(Actor actor, Point dir) {
-            Point newPoint = actor.literalPosition + dir;
+            Point newPoint = actor.Position + dir;
 
             if (!GameLoop.World.CurrentMap.GetTileAt<TileBase>(newPoint.X, newPoint.Y).IsBlockingLOS) {
                 lastPeek = dir;
@@ -61,7 +60,7 @@ namespace TearsInRain.Commands {
                 }
 
                 if (!received) {
-                    string msg = "dmg|" + defender.literalPosition.X + "|" + defender.literalPosition.Y + "|" + attacker.literalPosition.X + "|" + attacker.literalPosition.Y + "|" + attackChance + "|" + dodgeChance + "|" + damage;
+                    string msg = "dmg|" + defender.Position.X + "|" + defender.Position.Y + "|" + attacker.Position.X + "|" + attacker.Position.Y + "|" + attackChance + "|" + dodgeChance + "|" + damage;
                     GameLoop.NetworkingManager.SendNetMessage(0, System.Text.Encoding.UTF8.GetBytes(msg));
                 }
 
@@ -103,7 +102,7 @@ namespace TearsInRain.Commands {
             if (defender.Inventory.Count > 0) { 
                 foreach (Item item in defender.Inventory) {
                     item.Font = GameLoop.UIManager.hold;
-                    item.literalPosition = defender.literalPosition;
+                    item.Position = defender.Position;
                     
                     GameLoop.World.CurrentMap.Add(item);
                 } 
@@ -119,7 +118,7 @@ namespace TearsInRain.Commands {
 
 
             if (defender is Player) {
-                defender.literalPosition = new Point(0, 0);
+                defender.Position = new Point(0, 0);
                 defender.Health = defender.MaxHealth;
             } else {
                 GameLoop.World.CurrentMap.Remove(defender); 
@@ -129,7 +128,7 @@ namespace TearsInRain.Commands {
         }
 
         public void Pickup(Actor actor, Point pos) {
-            Point newPoint = actor.literalPosition + pos;
+            Point newPoint = actor.Position + pos;
             Item item = GameLoop.World.CurrentMap.GetEntityAt<Item>(newPoint);
 
             if (item != null) {
@@ -154,7 +153,7 @@ namespace TearsInRain.Commands {
         public void CloseDoor(Actor actor, Point pos, bool literalPos = false) {
             Point newPoint;
             if (!literalPos)
-                newPoint = actor.literalPosition + pos;
+                newPoint = actor.Position + pos;
             else
                 newPoint = pos;
 
